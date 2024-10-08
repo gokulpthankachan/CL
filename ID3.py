@@ -12,9 +12,9 @@ def entropy(data):
     yes=0.0
     no=0.0
     for _,rows in data.iterrows():
-        if rows["Answer"]=="yes":
+        if rows["Decision"]=="yes":
             yes+=1
-        elif rows["Answer"]=="no":
+        elif rows["Decision"]=="no":
             no+=1
     if yes==0.0 or no==0.0:
         return 0
@@ -47,7 +47,7 @@ def ID3(dataset,features):
             newNode = Node()
             newNode.isLeaf = True
             newNode.value = a
-            newNode.pred = np.unique(subdata["Answer"])
+            newNode.pred = np.unique(subdata["Decision"])
             root.children.append(newNode)
         else:
             dummyNode = Node()
@@ -80,7 +80,7 @@ dataset=pd.read_csv("ID3.csv")
 # print(dataset)
 # print ("------------------")
 features=[feat for feat in dataset]
-features.remove("Answer")
+features.remove("Decision")
 root = ID3(dataset,features)
 print("\nDecision Tree is : \n")
 printTree(root)
