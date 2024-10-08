@@ -21,8 +21,8 @@ classes can be used forthis problem.
 7. Write a program to implement 5-fold cross validation on a given dataset,
 compare the accuracy, precision,recall,and f- score for your data set for
 different folds.
-8. Implement svm / softmax classifier for cifar-10 dataset:
-(i) using knn.
+8. Implement svm / softmax classifier for cifar-10 dataset:\
+(i) using knn.\
 (ii) using 3 layer neural network.
 9. Build an artificial neural network by implementing the backpropogation
 algorithm and test the same using appropriate data sets.
