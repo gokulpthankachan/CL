@@ -1,86 +1,58 @@
-import pandas as pd
-import numpy as np
 import math
+import pandas as pd
 
-class Node:
-    def __init__(self):
-        self.children = []
-        self.value = ""
-        self.isLeaf = False
-        self.pred = ""
+# Calculate the entropy
 def entropy(data):
-    yes=0.0
-    no=0.0
-    for _,rows in data.iterrows():
-        if rows["Decision"]=="yes":
-            yes+=1
-        elif rows["Decision"]=="no":
-            no+=1
-    if yes==0.0 or no==0.0:
-        return 0
-    else:
-        py=yes/(yes+no)
-        pn=no/(yes+no)
-        return -(py*math.log(py,2)+pn*math.log(pn,2))
-def info_gain(dataset,feature):
-    attributes=np.unique(dataset[feature])
-    gain=entropy(dataset)
-    for attr in attributes:
-        subdata=dataset[dataset[feature]==attr]
-        sub_e=entropy(subdata)
-        gain -= (float(len(subdata)) / float(len(dataset))) * sub_e
-    return gain
-def ID3(dataset,features):
-    root=Node()
-    max_gain=0
-    max_feature=""
-    for feature in features:
-        gain=info_gain(dataset,feature)
-        if gain>max_gain:
-            max_gain=gain
-            max_feature=feature
-    root.value=max_feature
-    at= np.unique(dataset[max_feature])
-    for a in at:
-        subdata = dataset[dataset[max_feature] == a]
-        if entropy(subdata) == 0.0:
-            newNode = Node()
-            newNode.isLeaf = True
-            newNode.value = a
-            newNode.pred = np.unique(subdata["Decision"])
-            root.children.append(newNode)
-        else:
-            dummyNode = Node()
-            dummyNode.value = a
-            new_attrs = features.copy()
-            new_attrs.remove(max_feature)
-            child = ID3(subdata, new_attrs)
-            dummyNode.children.append(child)
-            root.children.append(dummyNode)
-    return root
-def printTree(root: Node, depth=0):
-    for i in range(depth):
-        print("\t", end="")
-    print(root.value, end="")
-    if root.isLeaf:
-        print(" -> ", root.pred)
-    print()
-    for child in root.children:
-        printTree(child, depth + 1)
-# def classify(root: Node, new):
-#     for child in root.children:
-#         if child.value == new[root.value]:
-#             if child.isLeaf:
-#                 print ("Predicted Label for new example", new," is:", child.pred)
-#                 exit
-#             else:
-#                 classify (child.children[0], new)
-dataset=pd.read_csv("ID3.csv")
-# print("The DATASET")
-# print(dataset)
-# print ("------------------")
-features=[feat for feat in dataset]
-features.remove("Decision")
-root = ID3(dataset,features)
-print("\nDecision Tree is : \n")
-printTree(root)
+    labels = data.iloc[:, -1]
+    total = len(labels)
+    counts = labels.value_counts()
+    entropy_value = 0
+    for count in counts:
+        prob = count / total
+        entropy_value -= prob * math.log2(prob)
+    return entropy_value
+
+# Calculate information gain
+def info_gain(data, feature):
+    total_entropy = entropy(data)
+    values = data[feature].unique()
+    weighted_entropy = 0
+    for value in values:
+        subset = data[data[feature] == value]
+        weighted_entropy += (len(subset) / len(data)) * entropy(subset)
+    return total_entropy - weighted_entropy
+
+# Build the ID3 decision tree
+def id3(data):
+    labels = data.iloc[:, -1]
+    if len(labels.unique()) == 1:  # If all labels are the same
+        return labels.iloc[0]
+    
+    best_feature = max(data.columns[:-1], key=lambda f: info_gain(data, f))
+    tree = {best_feature: {}}
+    
+    for value in data[best_feature].unique():
+        subset = data[data[best_feature] == value].drop(columns=[best_feature])
+        tree[best_feature][value] = id3(subset)
+    
+    return tree
+
+# Predict for a new instance
+def predict(tree, instance):
+    if not isinstance(tree, dict):
+        return tree
+    feature = next(iter(tree))
+    value = instance[feature]
+    return predict(tree[feature][value], instance)
+
+# Load dataset from CSV
+data = pd.read_csv('ID3.csv')
+
+# Build the decision tree
+tree = id3(data)
+print("Decision Tree:", tree)
+
+# Predict for a new sample
+new_sample = {'Outlook': 'Sunny', 'Temperature': 'Cool', 'Humidity': 'High', 'Wind': 'Strong'}
+prediction = predict(tree, new_sample)
+print("Prediction for new sample:", prediction)
